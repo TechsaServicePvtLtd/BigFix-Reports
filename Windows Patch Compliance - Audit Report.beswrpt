@@ -1,0 +1,589 @@
+<BESWebReport>
+    <Name> Windows Patch Compliance - Audit Report</Name>
+    <Description>A customized report, prints all computer names.</Description>
+    <Type>CustomReport</Type>
+    <Category>Custom Report</Category>
+    <Source>Techsa</Source>
+    <Data>
+      <![CDATA[
+  
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    td, th {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    button {
+      float: right;
+      margin-bottom: 5px;
+    }
+    #table, #tablee {
+      display: none; /* Hide tables initially */
+    }
+    #chartContainer {
+  display: flex; /* Flexbox container */
+  justify-content: center; /* Center the charts horizontally */
+  margin-top: 20px;
+}
+
+.chartWrapper {
+  display: flex; /* Flex container for the charts */
+  gap: 20px; /* Space between the charts */
+  width: 100%; /* Full width of the parent container */
+}
+
+#donutChart, #barChart, #barChart1 {
+  flex: 1; /* Flex-grow property to make the charts the same height */
+  min-height: 350px; /* Ensure a minimum height for the charts */
+}
+
+#patchChart {
+  flex: 1;
+  min-height: 350px;
+}
+#patchChart1 {
+  flex: 1;
+  min-height: 350px;
+}
+@media print {
+        /* Simplify styles for printing */
+        body {
+            font-size: 12pt;
+        }
+        .non-printable {
+            display: none;
+        }
+        /* Ensure the content fits well on each page */
+        .content {
+            page-break-before: always;
+            margin: 0;
+            padding: 0;
+        }
+    }
+  </style>
+
+</head>
+<body>
+<h1><b>Windows Patch Compliance Report</b></h1>
+<span><p>(with Source Release Date, Time Remediated - created by Techsa Services, Aug 2024)</p></span>
+<button id="exportButton" class="Button">Export to CSV</button>
+<button id="exportButton1" class="Button">Export to PDF</button>
+<h3 style="text-align: center;">Summary</h3>
+<!-- Input for selecting days -->
+<div style="text-align: center; margin-top: 10px;">
+  <label for="daysInput">Compliance Criteria, Install Patches within : </label>
+  <input type="number" id="daysInput" style="width: 50px;" />
+  Days
+  <button id="updateButton">Update Table</button>
+</div>
+<div id="chartContainer">
+  <div class="chartWrapper">
+    <div id="barChart1">
+      <canvas id="patchChart1" width="500" height="300"></canvas>
+    </div>
+    <div id="barChart">
+      <canvas id="patchChart" width="500" height="300"></canvas>
+    </div>
+  </div>
+</div>
+
+  <div id="totalComputers" style="text-align: center; margin-top: 20px;">
+    <h3>Total Computers: <span id="computerCount">0</span></h3>
+  </div>
+
+<!-- Placeholder for tables -->
+<div id="tablesContainer">
+    <table id="tablee" border="all">
+        <tr>
+   
+        </tr>
+        <!-- Summary rows will be added here -->
+      </table>
+
+  <h3 style="text-align: center;">Details</h3>
+  <table id="table" border="all">
+    <tr>
+      <th>Fixlet</th>
+      <th>Computer</th>
+      <th>IP Address</th>
+      <th>Source Severity</th>
+      <th>Source Release Date</th>
+      <th>Time Remediated</th>
+      <th>1st Relevant</th>
+      <th>Patch Installed</th>
+      <th>Compliance Status</th>
+      <th>Patch Age (days)</th>
+      <th>Deployed Age (days) since Release</th>
+      <th>Deployed Age (days) since 1st Relevant</th>
+    </tr>
+  <?relevance
+  concatenation of trs of (
+    ( td of (item 0 of it as string)
+      & td of (item 1 of it as string)
+      & td of (item 2 of it as string)
+      & td of (item 3 of it as string)
+      & td of (item 4 of it as string)
+      & td of (item 5 of it as string)
+      & td of (item 6 of it as string)
+      & td of (item 7 of it as string)
+    ) of
+    ( item 0 of it as string
+     ,item 1 of it as string
+    ,item 2 of it as string
+    ,item 3 of it as string
+    ,(if (year of it as integer = 1980)
+    then ("")
+    else (
+    (year of it as string & "/" &
+    (month of it as two digits) as string & "/" &
+    (day_of_month of it as two digits) as string )))
+    of (item 4 of it as date),
+     (if ((year of date (local time zone) of it) as integer = 1980)
+    then ("")
+    else (
+    (year of it as string & "/" &
+    (month of it as two digits) & "/" &
+    (day_of_month of it as two digits)) of date (local time zone) of it & " " &
+    (two digit hour of it as string & ":" &
+    two digit minute of it as string) of time (local time zone) of it))
+    of (item 5 of it as time)
+    , item 6 of it as time , item 7 of it as string
+    )of (
+    (if (exists Name of Fixlet of it | false)
+    then (concatenations "%0A" of (Name of Fixlet of it as string))
+    else ("")),
+    (if (exists Name of Computer of it | false)
+    then (concatenations "%0A" of (Name of Computer of it as string))
+    else ("")),
+    (if (exists ip addresses of Computer of it | false)
+    then (concatenations "%0A" of (ip addresses of computer of it as string))
+    else ("")),
+    (if (exists Source Severity of Fixlet of it | false) 
+    then (concatenations "%0A" of (Source Severity of Fixlet of it as string)) 
+    else ("")), 
+    (if (exists Source Release Date of Fixlet of it) 
+    then (Source Release Date of Fixlet of it as string) 
+    else ("Fri, 15 Feb 1980")), 
+    (if (exists Last Became Nonrelevant of it)
+    then (Last Became Nonrelevant of it as string)
+    else ("Fri, 15 Feb 1980 00:00:00 -0000")),
+    (if (exists First Became Relevant of it) 
+		then (First Became Relevant of it as string) 
+		else ("Fri, 15 Feb 1980 00:00:00 -0000")),
+    (if (Relevant Flag of it | false)
+    then ("Not Installed")
+    else ("Installed"))
+    )
+    of
+    results
+     of bes fixlets 
+      whose (
+        (name of site of it = "Enterprise Security"
+        Or name of site of it = "Updates for Windows applications"
+        or name of site of it = "Updates for Windows application Extended"
+        ))
+  )
+  ?>
+</table>
+  <br>
+  <br>
+  <br>
+  
+</div>
+
+<script>
+  let barChart = null;
+  let barChart1 = null
+
+function convertToCSV(table) {
+    const rows = table.querySelectorAll('tr');
+    let csv = [];
+
+    rows.forEach(row => {
+        const cells = Array.from(row.cells); // Convert cells to an array
+        const rowData = cells.map(cell => `"${cell.innerText}"`); // Map cells to their text content
+        csv.push(rowData.join(',')); // Join the cell data with commas
+    });
+
+    return csv.join('\n'); // Join all rows with new lines
+}
+
+function exportTablesToCSV() {
+    const table = document.querySelector('#table');
+    const tablee = document.querySelector('#tablee');
+    const combinedCSV = `${convertToCSV(tablee)}\n\n${convertToCSV(table)}`;
+    const blob = new Blob([combinedCSV], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'WINDOWS_Patch_Compliance_Report.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+document.getElementById("exportButton").addEventListener("click", exportTablesToCSV);
+
+document.getElementById("exportButton1").addEventListener("click", function() {
+    // Hide elements that shouldn't be printed
+    document.querySelectorAll('.non-printable').forEach(el => el.style.display = 'none');
+
+    window.print();
+
+    // Restore hidden elements after printing
+    document.querySelectorAll('.non-printable').forEach(el => el.style.display = '');
+});
+
+function calculateAgeInDays(dateStr1, dateStr2) {
+    const date1 = new Date(dateStr1);
+    const date2 = new Date(dateStr2);
+    const timeDiff = date2 - date1;
+    return Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  }
+
+function updateComplianceStatus() {
+    const daysInput = document.getElementById('daysInput').value;
+    const rows = document.querySelectorAll('#table tr:not(:first-child)');
+
+    rows.forEach(row => {
+        // Check if the row already has the required cells
+        let complianceStatusCell = row.cells[8];
+        let patchAgeCell = row.cells[9];
+        let deployedAgeCell = row.cells[10];
+        let relevantAgeCell = row.cells[11];
+
+        if (!complianceStatusCell) {
+            // Insert cells if they don't exist
+            complianceStatusCell = row.insertCell(8);
+            patchAgeCell = row.insertCell(9);
+            deployedAgeCell = row.insertCell(10);
+            relevantAgeCell = row.insertCell(11);
+        }
+
+        const sourceReleaseDateCell = row.cells[4].textContent;
+        const timeRemediatedCell = row.cells[5].textContent;
+        const firstRelevantCell = row.cells[6].textContent;
+        const patchInstalledCell = row.cells[7].textContent;
+
+        const sourceReleaseDateAge = calculateAgeInDays(sourceReleaseDateCell, new Date());
+
+        let complianceStatus = 'Non-Compliant';
+        let timeRemediatedAge = '';
+        let deployedAgeSince1stRelevant = '';
+
+        if (patchInstalledCell === 'Installed') {
+            if (timeRemediatedCell) {
+                const timeRemediatedAgeValue = calculateAgeInDays(sourceReleaseDateCell, timeRemediatedCell);
+                deployedAgeSince1stRelevant = calculateAgeInDays(firstRelevantCell, timeRemediatedCell);
+
+                if (deployedAgeSince1stRelevant <= daysInput) {
+                    complianceStatus = 'Compliant';
+                }
+                timeRemediatedAge = timeRemediatedAgeValue;
+            }
+        }
+
+        // Update the existing cells
+        complianceStatusCell.textContent = complianceStatus;
+        patchAgeCell.textContent = sourceReleaseDateAge;
+        deployedAgeCell.textContent = timeRemediatedAge;
+        relevantAgeCell.textContent = deployedAgeSince1stRelevant;
+    });
+
+    updateTablee(daysInput);
+   
+}
+
+function countFixletOccurrences(daysInput) {
+    const fixletCounts = {
+      "applicableSystemCount": {},
+      "installedSystemCount": {},
+      "notinstalledSystemCount": {},
+      "compliantCount": {},
+      "noncompliantCount": {},
+      "installedPercentage": {},
+      "compliantPercentage": {},
+    };
+
+    const tableRows = document.querySelectorAll('#table tr');
+
+    for (let i = 1; i < tableRows.length; i++) {
+      const fixletName = tableRows[i].cells[0].textContent;
+      const patchInstalled = tableRows[i].cells[7].textContent;
+      const complianceStatus = tableRows[i].cells[8].textContent;
+
+      if (!fixletCounts["applicableSystemCount"][fixletName]) {
+        fixletCounts["applicableSystemCount"][fixletName] = 0;
+        fixletCounts["installedSystemCount"][fixletName] = 0;
+        fixletCounts["notinstalledSystemCount"][fixletName] = 0;
+        fixletCounts["compliantCount"][fixletName] = 0;
+        fixletCounts["noncompliantCount"][fixletName] = 0;
+      }
+
+      fixletCounts["applicableSystemCount"][fixletName]++;
+
+      if (patchInstalled === 'Installed') {
+        fixletCounts["installedSystemCount"][fixletName]++;
+      } else {
+        fixletCounts["notinstalledSystemCount"][fixletName]++;
+      }
+
+      if (complianceStatus === 'Compliant') {
+        fixletCounts["compliantCount"][fixletName]++;
+      } else {
+        fixletCounts["noncompliantCount"][fixletName]++;
+      }
+    }
+
+    for (const fixletName in fixletCounts["applicableSystemCount"]) {
+      fixletCounts.installedPercentage[fixletName] = ((fixletCounts["installedSystemCount"][fixletName] / fixletCounts["applicableSystemCount"][fixletName]) * 100).toFixed(2) + '%';
+      fixletCounts.compliantPercentage[fixletName] = ((fixletCounts["compliantCount"][fixletName] / fixletCounts["applicableSystemCount"][fixletName]) * 100).toFixed(2) + '%';
+    }
+
+    return fixletCounts;
+  }
+
+function updateTablee(daysInput) {
+    const fixletCounts = countFixletOccurrences(daysInput);
+    const summaryTable = document.getElementById('tablee');
+
+    // Remove all rows from the summary table, including the header
+    while (summaryTable.rows.length > 0) {
+        summaryTable.deleteRow(0);
+    }
+
+    // Add headers for the new columns
+    const tableeHeaders = summaryTable.insertRow(0);
+    tableeHeaders.innerHTML = `
+        <th>Fixlet</th>
+        <th>Source Release Date</th>
+        <th>Applicable system Count</th>
+        <th>Installed System Count</th>
+        <th>Not Installed system Count</th>
+        <th>Compliant Count (inst within ${daysInput} days)</th>
+        <th>Non-Compliant Count (Not Installed, inst beyond ${daysInput} days)</th>
+        <th>Installed %</th>
+        <th>Compliant %</th>
+    `;
+
+    const fixletReleaseDates = {};
+    const tableRows = document.querySelectorAll('#table tr:not(:first-child)');
+    
+    tableRows.forEach(row => {
+        const fixletName = row.cells[0].textContent.trim();
+        const releaseDate = row.cells[4].textContent.trim();
+        if (!fixletReleaseDates[fixletName]) {
+            fixletReleaseDates[fixletName] = releaseDate;
+        }
+    });
+
+    // Add the summary rows
+    for (const fixletName in fixletCounts["applicableSystemCount"]) {
+        const row = summaryTable.insertRow();
+        row.insertCell().textContent = fixletName;
+
+        row.insertCell().textContent = fixletReleaseDates[fixletName] || '';
+        row.insertCell().textContent = fixletCounts["applicableSystemCount"][fixletName];
+        row.insertCell().textContent = fixletCounts["installedSystemCount"][fixletName];
+        row.insertCell().textContent = fixletCounts["notinstalledSystemCount"][fixletName];
+        
+        // Update compliant and non-compliant counts based on daysInput
+        const compliantCount = fixletCounts["compliantCount"][fixletName];
+        const noncompliantCount = fixletCounts["noncompliantCount"][fixletName];
+        
+        row.insertCell().textContent = `${compliantCount}`;
+        row.insertCell().textContent = `${noncompliantCount}`;
+
+        row.insertCell().textContent = fixletCounts["installedPercentage"][fixletName];
+        row.insertCell().textContent = fixletCounts["compliantPercentage"][fixletName];
+    }
+
+    document.getElementById('table').style.display = 'table'; // Show the main table
+    document.getElementById('tablee').style.display = 'table'; // Show the summary table
+
+      // Draw the bar chart after updating the tablee
+      drawBarChart();
+      drawBarChart1();
+      totalComputer();
+}
+
+function drawBarChart() {
+        const canvas = document.getElementById('patchChart');
+        const ctx = canvas.getContext('2d');
+
+        // Simulate row data retrieval
+        const rows = Array.from(document.querySelectorAll('#tablee tr')).slice(1);
+        let compliantCount = 0;
+        let nonCompliantCount = 0;
+        let Installed = 0;
+
+        rows.forEach(row => {
+            compliantCount += parseInt(row.cells[5].textContent) || 0;
+            nonCompliantCount += parseInt(row.cells[6].textContent) || 0;
+            Installed += parseInt(row.cells[3].textContent) || 0;
+        });
+
+        const totalApplicableCount = compliantCount + nonCompliantCount;
+        const nonInstalled = totalApplicableCount - Installed;
+
+        const installedPercentage = ((Installed / totalApplicableCount) * 100).toFixed(2); 
+        const pendingPercentage = ((nonInstalled / totalApplicableCount) * 100).toFixed(2); 
+
+        // Data for the chart
+        const labels = ['Applicable Patches', 'Installed', 'Not Installed'];
+        const data = [totalApplicableCount, Installed, nonInstalled];
+        const percentages = [100, installedPercentage, pendingPercentage];
+
+        const chartWidth = canvas.width;
+        const chartHeight = canvas.height;
+        const barWidth = 60;
+        const barSpacing = 50;
+        const maxValue = Math.max(...data);
+
+        // Clear canvas
+        ctx.clearRect(0, 0, chartWidth, chartHeight);
+
+        // Draw bars
+        data.forEach((value, index) => {
+            const barHeight = (value / maxValue) * (chartHeight - 50);
+            const x = (index * (barWidth + barSpacing)) + 30;
+            const y = chartHeight - barHeight - 30;
+
+            // Draw bar
+            ctx.fillStyle = index === 0 ? '#2196F3' : index === 1 ? '#4CAF50' : '#F44336'; // Blue for Applicable, Green for Installed, Red for Not Installed
+            ctx.fillRect(x, y, barWidth, barHeight);
+
+            const combinedText = `${value} (${percentages[index]}%)`;
+
+            // Draw label on top of the bar
+            ctx.fillStyle = '#000';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center'; // Center text horizontally
+        ctx.fillText(combinedText, x + barWidth / 2, y - 10);
+        });
+
+        // Draw X and Y axes
+        ctx.beginPath();
+        ctx.moveTo(20, chartHeight - 30);
+        ctx.lineTo(chartWidth - 10, chartHeight - 30);
+        ctx.moveTo(20, chartHeight - 30);
+        ctx.lineTo(20, 30);
+        ctx.stroke();
+
+     
+
+        const xOffset = 10; // Adjust this value to move the labels to the right
+    labels.forEach((label, index) => {
+        const x = (index * (barWidth + barSpacing)) + 30 + xOffset; // Added offset to move labels right
+        ctx.textAlign = 'center'; // Center text horizontally
+        ctx.fillText(label, x + barWidth / 2, chartHeight - 10); // Centered text under the bar
+    });
+
+    }
+
+function drawBarChart1() {
+    const canvas = document.getElementById('patchChart1');
+    const ctx = canvas.getContext('2d');
+
+    // Simulate row data retrieval
+    const rows = Array.from(document.querySelectorAll('#tablee tr')).slice(1);
+    let compliantCount = 0;
+    let nonCompliantCount = 0;
+
+    rows.forEach(row => {
+        compliantCount += parseInt(row.cells[5].textContent) || 0;
+        nonCompliantCount += parseInt(row.cells[6].textContent) || 0;
+    });
+
+    const totalApplicableCount = compliantCount + nonCompliantCount;
+    const compliantPercentage = ((compliantCount / totalApplicableCount) * 100).toFixed(2);
+    const noncompliantPercentage = ((nonCompliantCount / totalApplicableCount) * 100).toFixed(2);
+
+    // Data for the chart
+    const labels = ['Applicable Patches', 'Compliant', 'Non-Compliant'];
+    const data = [totalApplicableCount, compliantCount, nonCompliantCount];
+    const percentages = [100, compliantPercentage, noncompliantPercentage];
+
+    const chartWidth = canvas.width;
+    const chartHeight = canvas.height;
+    const barWidth = 60;
+    const barSpacing = 50;
+    const maxValue = Math.max(...data);
+
+    // Clear canvas
+    ctx.clearRect(0, 0, chartWidth, chartHeight);
+
+    // Draw bars
+    data.forEach((value, index) => {
+        const barHeight = (value / maxValue) * (chartHeight - 50);
+        const x = (index * (barWidth + barSpacing)) + 30;
+        const y = chartHeight - barHeight - 30;
+
+        // Draw bar
+        ctx.fillStyle = index === 0 ? '#2196F3' : index === 1 ? '#4CAF50' : '#F44336'; // Blue for Applicable, Green for Compliant, Red for Non-Compliant
+        ctx.fillRect(x, y, barWidth, barHeight);
+
+        // Combine value and percentage
+        const combinedText = `${value} (${percentages[index]}%)`;
+
+        // Draw combined text on top of the bar
+        ctx.fillStyle = '#000';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center'; // Center text horizontally
+        ctx.fillText(combinedText, x + barWidth / 2, y - 10); // Centered text on top of the bar
+    });
+
+    // Draw X and Y axes
+    ctx.beginPath();
+    ctx.moveTo(20, chartHeight - 30);
+    ctx.lineTo(chartWidth - 10, chartHeight - 30);
+    ctx.moveTo(20, chartHeight - 30);
+    ctx.lineTo(20, 30);
+    ctx.stroke();
+
+    // Draw X-Axis labels
+    const xOffset = 10; // Adjust this value to move the labels to the right
+    labels.forEach((label, index) => {
+        const x = (index * (barWidth + barSpacing)) + 30 + xOffset; // Added offset to move labels right
+        ctx.textAlign = 'center'; // Center text horizontally
+        ctx.fillText(label, x + barWidth / 2, chartHeight - 10); // Centered text under the bar
+    });
+
+}
+
+function totalComputer() {
+  const tableRows = document.querySelectorAll('#table tr');
+  const uniqueComputers = new Set(); // Set to store unique computer names
+
+  tableRows.forEach(row => {
+    const computerName = row.cells[1].textContent.trim();
+    uniqueComputers.add(computerName); // Add each computer to the Set
+  });
+
+  const totalComputers = uniqueComputers.size; // Get the number of unique computers
+  document.getElementById('computerCount').textContent = totalComputers; // Display the total number of unique computers
+}
+
+document.getElementById('updateButton').addEventListener('click', updateComplianceStatus);
+
+</script>
+</body>
+</html>
+
+
+   ]]>
+  </Data>
+</BESWebReport>
