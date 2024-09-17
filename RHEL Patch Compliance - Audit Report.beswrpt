@@ -59,21 +59,6 @@
   flex: 1;
   min-height: 350px;
 }
-@media print {
-        /* Simplify styles for printing */
-        body {
-            font-size: 12pt;
-        }
-        .non-printable {
-            display: none;
-        }
-        /* Ensure the content fits well on each page */
-        .content {
-            page-break-before: always;
-            margin: 0;
-            padding: 0;
-        }
-    }
   </style>
 
 </head>
@@ -114,91 +99,94 @@
         <!-- Summary rows will be added here -->
       </table>
 
-  <h3 style="text-align: center;">Details</h3>
-  <table id="table" border="all">
-    <tr>
-      <th>Fixlet</th>
-      <th>Computer</th>
-      <th>IP Address</th>
-      <th>Source Severity</th>
-      <th>Source Release Date</th>
-      <th>Time Remediated</th>
-      <th>1st Relevant</th>
-      <th>Patch Installed</th>
-      <th>Compliance Status</th>
-      <th>Patch Age (days)</th>
-      <th>Deployed Age (days) since Release</th>
-      <th>Deployed Age (days) since 1st Relevant</th>
-    </tr>
-  <?relevance
-  concatenation of trs of (
-    ( td of (item 0 of it as string)
-      & td of (item 1 of it as string)
-      & td of (item 2 of it as string)
-      & td of (item 3 of it as string)
-      & td of (item 4 of it as string)
-      & td of (item 5 of it as string)
-      & td of (item 6 of it as string)
-      & td of (item 7 of it as string)
-    ) of
-    ( item 0 of it as string
-     ,item 1 of it as string
-    ,item 2 of it as string
-    ,item 3 of it as string
-    ,(if (year of it as integer = 1980)
-    then ("")
-    else (
-    (year of it as string & "/" &
-    (month of it as two digits) as string & "/" &
-    (day_of_month of it as two digits) as string )))
-    of (item 4 of it as date),
-     (if ((year of date (local time zone) of it) as integer = 1980)
-    then ("")
-    else (
-    (year of it as string & "/" &
-    (month of it as two digits) & "/" &
-    (day_of_month of it as two digits)) of date (local time zone) of it & " " &
-    (two digit hour of it as string & ":" &
-    two digit minute of it as string) of time (local time zone) of it))
-    of (item 5 of it as time)
-    , item 6 of it as time , item 7 of it as string
-    )of (
-    (if (exists Name of Fixlet of it | false)
-    then (concatenations "%0A" of (Name of Fixlet of it as string))
-    else ("")),
-    (if (exists Name of Computer of it | false)
-    then (concatenations "%0A" of (Name of Computer of it as string))
-    else ("")),
-    (if (exists ip addresses of Computer of it | false)
-    then (concatenations "%0A" of (ip addresses of computer of it as string))
-    else ("")),
-    (if (exists Source Severity of Fixlet of it | false) 
-    then (concatenations "%0A" of (Source Severity of Fixlet of it as string)) 
-    else ("")), 
-    (if (exists Source Release Date of Fixlet of it) 
-    then (Source Release Date of Fixlet of it as string) 
-    else ("Fri, 15 Feb 1980")), 
-    (if (exists Last Became Nonrelevant of it)
-    then (Last Became Nonrelevant of it as string)
-    else ("Fri, 15 Feb 1980 00:00:00 -0000")),
-    (if (exists First Became Relevant of it) 
-		then (First Became Relevant of it as string) 
-		else ("Fri, 15 Feb 1980 00:00:00 -0000")),
-    (if (Relevant Flag of it | false)
-    then ("Not Installed")
-    else ("Installed"))
-    )
-    of
-    results
-     of bes fixlets 
-      whose (
-        (name of site of it = "Patches for RHEL 7" OR
-			 name of site of it = "Patches for RHEL 8" OR
-			 name of site of it = "Patches for RHEL 9"  
-        ))
-  )
-  ?>
-</table>
+      <div class="print-section" style="page-break-before: always;">
+      <h3 style="text-align: center;">System Patch Compliance With Details</h3>
+      <table id="table" border="all">
+          <tr>
+              <th>Fixlet</th>
+              <th>Computer</th>
+              <th>IP Address</th>
+              <th>Source Severity</th>
+              <th>Source Release Date</th>
+              <th>Time Remediated</th>
+              <th>1st Relevant</th>
+              <th>Patch Installed</th>
+              <th>Compliance Status</th>
+              <th>Patch Age (days)</th>
+              <th>Deployed Age (days) since Release</th>
+              <th>Deployed Age (days) since 1st Relevant</th>
+          </tr>
+          <?relevance
+          concatenation of trs of (
+              ( td of (item 0 of it as string)
+                & td of (item 1 of it as string)
+                & td of (item 2 of it as string)
+                & td of (item 3 of it as string)
+                & td of (item 4 of it as string)
+                & td of (item 5 of it as string)
+                & td of (item 6 of it as string)
+                & td of (item 7 of it as string)
+              ) of
+              ( item 0 of it as string
+               ,item 1 of it as string
+              ,item 2 of it as string
+              ,item 3 of it as string
+              ,(if (year of it as integer = 1980)
+              then ("")
+              else (
+              (year of it as string & "/" &
+              (month of it as two digits) as string & "/" &
+              (day_of_month of it as two digits) as string )))
+              of (item 4 of it as date),
+               (if ((year of date (local time zone) of it) as integer = 1980)
+              then ("")
+              else (
+              (year of it as string & "/" &
+              (month of it as two digits) & "/" &
+              (day_of_month of it as two digits)) of date (local time zone) of it & " " &
+              (two digit hour of it as string & ":" &
+              two digit minute of it as string) of time (local time zone) of it))
+              of (item 5 of it as time)
+              , item 6 of it as time , item 7 of it as string
+              )of (
+              (if (exists Name of Fixlet of it | false)
+              then (concatenations "%0A" of (Name of Fixlet of it as string))
+              else ("")),
+              (if (exists Name of Computer of it | false)
+              then (concatenations "%0A" of (Name of Computer of it as string))
+              else ("")),
+              (if (exists ip addresses of Computer of it | false)
+              then (concatenations "%0A" of (ip addresses of computer of it as string))
+              else ("")),
+              (if (exists Source Severity of Fixlet of it | false) 
+              then (concatenations "%0A" of (Source Severity of Fixlet of it as string)) 
+              else ("")), 
+              (if (exists Source Release Date of Fixlet of it) 
+              then (Source Release Date of Fixlet of it as string) 
+              else ("Fri, 15 Feb 1980")), 
+              (if (exists Last Became Nonrelevant of it)
+              then (Last Became Nonrelevant of it as string)
+              else ("Fri, 15 Feb 1980 00:00:00 -0000")),
+              (if (exists First Became Relevant of it) 
+                  then (First Became Relevant of it as string) 
+                  else ("Fri, 15 Feb 1980 00:00:00 -0000")),
+              (if (Relevant Flag of it | false)
+              then ("Not Installed")
+              else ("Installed"))
+              )
+              of
+              results
+               of bes fixlets 
+                whose (
+                  ( name of site of it = "Patches for RHEL 7" OR
+                  name of site of it = "Patches for RHEL 8" OR
+                  name of site of it = "Patches for RHEL 9"  
+                  ))
+            )
+          ?>
+      </table>
+  </div>
+  
   <br>
   <br>
   <br>
@@ -241,10 +229,17 @@ document.getElementById("exportButton1").addEventListener("click", function() {
     // Hide elements that shouldn't be printed
     document.querySelectorAll('.non-printable').forEach(el => el.style.display = 'none');
 
+    // Apply page break before the specific section
+    document.querySelector('.print-section').style.pageBreakBefore = 'always';
+
+    // Print the page
     window.print();
 
     // Restore hidden elements after printing
     document.querySelectorAll('.non-printable').forEach(el => el.style.display = '');
+
+    // Reset the page break
+    document.querySelector('.print-section').style.pageBreakBefore = '';
 });
 
 function calculateAgeInDays(dateStr1, dateStr2) {
